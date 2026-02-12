@@ -212,18 +212,13 @@ async function handleLogin() {
           </svg>
           {{ authStore.isLoading ? '登入中...' : '登入' }}
         </button>
-
-        <!-- 提示訊息 -->
-        <div class="px-4 py-3 bg-primary-50 border border-primary-100 rounded-xl text-sm text-primary-600 text-center">
-          💡 提示：輸入任意電子郵件和密碼即可登入
-        </div>
       </form>
     </div>
 
     <!-- 底部連結 -->
     <p class="mt-6 text-sm text-gray-500">
       還沒有帳號？
-      <a href="#" class="text-primary-600 hover:text-primary-700 font-medium">立即註冊</a>
+      <router-link to="/register" class="text-primary-600 hover:text-primary-700 font-medium">立即註冊</router-link>
     </p>
   </div>
 </template>

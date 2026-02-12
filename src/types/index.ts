@@ -63,6 +63,16 @@ export interface LoginForm {
 }
 
 /**
+ * 註冊表單資料
+ */
+export interface RegisterForm {
+  name: string
+  email: string
+  password: string
+  confirmPassword: string
+}
+
+/**
  * API 通用錯誤回應結構
  */
 export interface ApiError {

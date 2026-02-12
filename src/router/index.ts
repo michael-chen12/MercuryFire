@@ -14,6 +14,13 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/RegisterView.vue'),
+    // 已登入者重定向到首頁
+    meta: { guestOnly: true },
+  },
+  {
     path: '/',
     name: 'Dashboard',
     component: () => import('@/views/DashboardView.vue'),

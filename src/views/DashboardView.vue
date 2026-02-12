@@ -4,31 +4,27 @@
 // 包含搜尋、統計、帳號卡片列表、CRUD 操作
 // ========================================
 
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useAccountStore } from '@/stores/accountStore'
 import AppHeader from '@/components/AppHeader.vue'
 import StatCard from '@/components/StatCard.vue'
 import AccountCard from '@/components/AccountCard.vue'
 import AccountModal from '@/components/AccountModal.vue'
-import { useDebounce } from '@/composables/useDebounce'
 import type { Account, AccountFormDto } from '@/types'
 
 const accountStore = useAccountStore()
 
 // ── 搜尋相關 ────────────────────────────
 const searchQuery = ref('')
-// 防抖：等待使用者停止輸入 400ms 後才觸發 API
-const debouncedSearch = useDebounce(searchQuery, 400)
 
-// 監聽防抖後的搜尋值，動態過濾結果
-watch(debouncedSearch, (val) => {
-  // 簡單的模糊搜尋：透過 name 或 email 查詢
-  const trimmed = val.trim()
-  if (trimmed) {
-    accountStore.fetchAccounts({ name: trimmed, email: trimmed })
-  } else {
-    accountStore.fetchAccounts()
-  }
+// 客戶端過濾：對 name 或 email 進行 OR 模糊比對
+// API 的 name/email 參數是 AND 邏輯，不適合做聯合搜尋
+const filteredAccounts = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return accountStore.accounts
+  return accountStore.accounts.filter(
+    (a: Account) => a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)
+  )
 })
 
 // ── Modal 相關 ───────────────────────────
@@ -37,6 +33,13 @@ const isModalVisible = ref(false)
 const editTarget = ref<Account | null>(null)
 // 正在刪除的帳號 id（顯示 loading 狀態）
 const deletingId = ref<string | null>(null)
+
+// Modal 關閉時清除編輯目標，避免再次編輯同一筆資料時 watch 不觸發
+watch(isModalVisible, (visible) => {
+  if (!visible) {
+    editTarget.value = null
+  }
+})
 
 // 開啟新增 Modal
 function openCreateModal() {
@@ -177,7 +180,7 @@ onMounted(() => {
 
         <!-- 空狀態 -->
         <div
-          v-else-if="accountStore.accounts.length === 0"
+          v-else-if="filteredAccounts.length === 0"
           class="text-center py-16 text-gray-400"
         >
           <svg class="w-14 h-14 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +202,7 @@ onMounted(() => {
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         >
           <AccountCard
-            v-for="account in accountStore.accounts"
+            v-for="account in filteredAccounts"
             :key="account.id"
             :account="account"
             :is-deleting="deletingId === account.id"

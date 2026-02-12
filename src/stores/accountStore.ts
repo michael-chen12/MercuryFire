@@ -16,6 +16,7 @@ export const useAccountStore = defineStore('account', () => {
   const accounts = ref<Account[]>([])
   const isLoading = ref(false)
   const errorMessage = ref('')
+  const lastQuery = ref<AccountQuery | undefined>(undefined)
 
   // Getters 
 
@@ -34,6 +35,7 @@ export const useAccountStore = defineStore('account', () => {
   async function fetchAccounts(query?: AccountQuery): Promise<void> {
     isLoading.value = true
     errorMessage.value = ''
+    lastQuery.value = query
 
     try {
       accounts.value = await getAccounts(query)
@@ -48,10 +50,14 @@ export const useAccountStore = defineStore('account', () => {
   // 新增帳號
   async function addAccount(data: AccountFormDto): Promise<void> {
     isLoading.value = true
+    errorMessage.value = ''
 
     try {
-      const newAccount = await createAccount(data)
-      accounts.value.push(newAccount)
+      await createAccount(data)
+      accounts.value = await getAccounts(lastQuery.value)
+    } catch (err: unknown) {
+      errorMessage.value = '新增帳號失敗，請稍後再試'
+      throw err
     } finally {
       isLoading.value = false
     }
@@ -60,13 +66,14 @@ export const useAccountStore = defineStore('account', () => {
   // 編輯帳號
   async function editAccount(id: string, data: AccountFormDto): Promise<void> {
     isLoading.value = true
+    errorMessage.value = ''
 
     try {
-      const updated = await updateAccount(id, data)
-      const idx = accounts.value.findIndex((a) => a.id === id)
-      if (idx !== -1) {
-        accounts.value[idx] = updated
-      }
+      await updateAccount(id, data)
+      accounts.value = await getAccounts(lastQuery.value)
+    } catch (err: unknown) {
+      errorMessage.value = '更新帳號失敗，請稍後再試'
+      throw err
     } finally {
       isLoading.value = false
     }
@@ -75,10 +82,14 @@ export const useAccountStore = defineStore('account', () => {
   // 刪除帳號
   async function removeAccount(id: string): Promise<void> {
     isLoading.value = true
+    errorMessage.value = ''
 
     try {
       await deleteAccount(id)
-      accounts.value = accounts.value.filter((a) => a.id !== id)
+      accounts.value = await getAccounts(lastQuery.value)
+    } catch (err: unknown) {
+      errorMessage.value = '刪除帳號失敗，請稍後再試'
+      throw err
     } finally {
       isLoading.value = false
     }
